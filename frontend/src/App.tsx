@@ -8,6 +8,7 @@ import Recommendations from './pages/recommendations';
 import Statistics from './pages/statistics';
 import ComponentsExample from './pages/ComponentsExample';
 import ThemeToggle from './components/ThemeToggle';
+import AppLayout from './components/AppLayout';
 
 function App() {
 
@@ -20,12 +21,12 @@ function App() {
   <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/form-profile-risk" element={<FormProfileRisk />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/recommendations" element={<Recommendations />} />
-  <Route path="/statistics" element={<Statistics />} />
-  <Route path="/ui" element={<ComponentsExample />} />
+        <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+        <Route path="/form-profile-risk" element={<AppLayout><FormProfileRisk /></AppLayout>} />
+        <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
+        <Route path="/recommendations" element={<AppLayout><Recommendations /></AppLayout>} />
+        <Route path="/statistics" element={<AppLayout><Statistics /></AppLayout>} />
+        <Route path="/ui" element={<AppLayout><ComponentsExample /></AppLayout>} />
 
       </Routes>
     </div>
