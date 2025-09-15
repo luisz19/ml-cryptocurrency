@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import {Routes, Route} from 'react-router-dom';
 import Dashboard from './pages/dashboard';
 import Login from './pages/login';
 import Register from './pages/register';
@@ -18,7 +18,8 @@ function App() {
       <div className="fixed right-4 top-4 z-50">
         <ThemeToggle />
       </div>
-  <Routes>
+
+      <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
