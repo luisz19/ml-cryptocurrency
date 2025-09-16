@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Aside from "./Aside";
+import Header from "./Header";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -9,6 +11,20 @@ type Props = {
 
 export default function AppLayout({ children }: Props) {
   const [open, setOpen] = useState<boolean>(true);
+  const location = useLocation();
+
+  const title = (() => {
+    const path = location.pathname.split("/")[1] || "dashboard";
+    const map: Record<string, string> = {
+      dashboard: "Dashboard",
+      statistics: "Estatísticas",
+      recommendations: "Recomendações",
+      profile: "Configurações",
+      "form-profile-risk": "Perfil de Risco",
+      ui: "Componentes UI",
+    };
+    return map[path] ?? "Aplicação";
+  })();
 
   useEffect(() => {
     try {
@@ -20,14 +36,17 @@ export default function AppLayout({ children }: Props) {
   return (
     <div className="flex">
       <Aside open={open} onToggle={setOpen} />
-      <main
+      <div className="flex-1 min-h-dvh flex flex-col">
+        <Header title={title} />
+        <main
         className={cn(
-          "min-h-dvh flex-1 transition-[margin-inline,width] duration-300 p-4",
+          "flex-1 transition-[margin-inline,width] duration-300 p-4",
           open ? "ml-0" : "ml-0"
         )}
       >
-        {children}
-      </main>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
