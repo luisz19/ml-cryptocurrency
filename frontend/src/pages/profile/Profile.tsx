@@ -40,8 +40,9 @@ const Profile = () => {
    };
 
   return (
-    <section className="grid md:grid-cols-6 gap-4 p-4 ">
-      <Card className="col-span-2 flex flex-col h-[500px] items-center justify-center bg-sidebar-accent">
+    <section className="p-4 h-full flex flex-col gap-4 justify-center">
+      <div className="m-auto w-full max-w-6xl grid md:grid-cols-6 gap-4 justify-center">
+      <Card className=" w-full md:col-span-2 flex flex-col h-[500px] items-center justify-center bg-sidebar-accent">
         <div className="w-[100px] h-[100px] rounded-full dark:bg-primary-foreground/50 bg-primary-foreground/60  "></div>
         <div className="flex flex-col items-center">
           <h4 className="text-2xl">Ester Alves</h4>
@@ -53,8 +54,8 @@ const Profile = () => {
 
       </Card>
 
-      <Card className="col-span-4 p-4 flex flex-col justify-center gap-4 bg-sidebar-accent">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      <Card className="col-span-4 p-6 md:p-8 flex flex-col justify-center gap-4 bg-sidebar-accent">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mx-auto w-full max-w-4xl px-2 md:px-4 lg:px-6" noValidate>
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium">Nome</label>
             <Input
@@ -151,8 +152,7 @@ const Profile = () => {
         </form>
       </Card>
 
-
-
+      </div>
     </section>
   )
 }
