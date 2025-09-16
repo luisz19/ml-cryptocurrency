@@ -1,6 +1,7 @@
 import { Button, Card, Input } from "@/components";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { Badge } from "@/components/ui/Badge";
 
 const Profile = () => {
 
@@ -44,10 +45,14 @@ const Profile = () => {
       <div className="m-auto w-full max-w-6xl grid md:grid-cols-6 gap-4 justify-center">
       <Card className=" w-full md:col-span-2 flex flex-col h-[500px] items-center justify-center bg-sidebar-accent">
         <div className="w-[100px] h-[100px] rounded-full dark:bg-primary-foreground/50 bg-primary-foreground/60  "></div>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center ">
           <h4 className="text-2xl">Ester Alves</h4>
           <span className="text-sm text-accent-foreground/60">e.alves@example.com</span>
-          <span>Moderado</span>
+
+          <div className="flex flex-col mt-3 items-center gap-1">
+            <span className="text-xs text-accent-foreground/80">Perfil de risco:</span>
+            <Badge variant="success">Moderado</Badge>
+          </div>
         </div>
 
         <Button variant="destructive" className="p-5">Deletar Perfil</Button>
