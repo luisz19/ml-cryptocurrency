@@ -7,7 +7,6 @@ import Profile from './pages/profile';
 import Recommendations from './pages/recommendations';
 import Statistics from './pages/statistics';
 import ComponentsExample from './pages/ComponentsExample';
-import ThemeToggle from './components/ThemeToggle';
 import AppLayout from './components/AppLayout';
 
 function App() {
@@ -15,9 +14,7 @@ function App() {
   return (
     <>
       <div className="App">
-      <div className="fixed right-4 top-4 z-50">
-        <ThemeToggle />
-      </div>
+      
 
       <Routes>
         <Route path="/" element={<Login />} />
