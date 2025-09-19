@@ -50,7 +50,7 @@ const Register = () => {
   return (
     <div className="min-h-dvh grid place-items-center px-4 bg-card">
       <div className="fixed right-4 top-4"><ThemeToggle /></div>
-      <Card className="w-full max-w-md bg-card">
+      <Card className="w-full max-w-md bg-card  flex flex-col">
         <CardHeader>
           <CardTitle className="text-2xl">Crie sua conta!</CardTitle>
           <CardDescription>

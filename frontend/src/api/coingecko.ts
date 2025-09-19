@@ -8,6 +8,7 @@ export interface Cryptocurrency {
   current_price: number;
   price_change_percentage_24h: number;
   market_cap_rank: number;
+  sparkline_in_7d?: { price: number[] };
 }
 
 export interface PriceData {
@@ -32,6 +33,19 @@ export const fetchTopCryptocurrencies = async (limit: number = 100): Promise<Cry
     return await response.json();
   } catch (error) {
     console.error('Error fetching cryptocurrencies:', error);
+    throw error;
+  }
+};
+
+export const fetchTopCryptocurrenciesWithSparkline = async (limit: number = 50, currency: string = 'usd'): Promise<Cryptocurrency[]> => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=${limit}&page=1&sparkline=true&price_change_percentage=24h`
+    );
+    if (!response.ok) throw new Error('Failed to fetch cryptocurrencies with sparkline');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching cryptocurrencies with sparkline:', error);
     throw error;
   }
 };
