@@ -4,6 +4,7 @@ import { CryptoChart } from "@/components/CryptoChart";
 import { useState } from "react";
 import { type Cryptocurrency } from '@/api/coingecko';
 import { CryptoSelector } from "@/components/CryptoSelector";
+import { MarketTable } from '@/components/MarketTable';
 
 
 const Recommendations = () => {
@@ -24,6 +25,17 @@ const Recommendations = () => {
       <div>
         <CryptoCards />
       </div>
+
+      <Card className="container mx-auto p-10 flex flex-col">
+          <MarketTable
+            limit={5}
+            selectedId={selectedCrypto?.id || null}
+            onSelect={(coin) => setSelectedCrypto(coin)}
+          />
+
+
+      </Card>
+
 
       <Card className="flex flex-col p-6">
         <div className="flex items-center justify-between">
