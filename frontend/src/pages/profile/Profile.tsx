@@ -26,7 +26,6 @@ const Profile = () => {
    const {
      register,
      handleSubmit,
-     reset,
      watch,
      formState: { errors, isSubmitting },
    } = useForm<FormValues>({
@@ -146,7 +145,7 @@ const Profile = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => { navigate('/form-profile-risk') }}
+              onClick={() => { navigate('/form-profile-risk/edit') }}
             >
               Refazer formulário
             </Button>

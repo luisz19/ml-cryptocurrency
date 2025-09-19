@@ -21,6 +21,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
         <Route path="/form-profile-risk" element={<FormProfileRisk />} />
+        <Route path="/form-profile-risk/edit" element={<AppLayout><FormProfileRisk mode="edit" /></AppLayout>} />
         <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
         <Route path="/recommendations" element={<AppLayout><Recommendations /></AppLayout>} />
         <Route path="/statistics" element={<AppLayout><Statistics /></AppLayout>} />

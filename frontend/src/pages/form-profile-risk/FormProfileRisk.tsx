@@ -69,7 +69,11 @@ function classifyRisk(score: number) {
   return { level: 'Agressivo', color: 'bg-[#99E39E]/15 text-[#99E39E] border-[#99E39E]/30' };
 }
 
-const FormProfileRisk = () => {
+interface FormProfileRiskProps {
+  mode?: 'edit';
+}
+
+const FormProfileRisk = ({ mode }: FormProfileRiskProps) => {
   const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     defaultValues: {
       horizon: '', dropReaction: '', knowledge: '', goal: '', allocation: ''
@@ -88,7 +92,11 @@ const FormProfileRisk = () => {
     setResult({ level: r.level, score });
  
     await new Promise(res => setTimeout(res, 4000));
-    navigate('/dashboard');
+    if (mode === 'edit') {
+      navigate('/profile');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -144,7 +152,7 @@ const FormProfileRisk = () => {
               </Button>
               <Button type="submit" disabled={isSubmitting} className="flex-1 bg-[#99E39E] text-black hover:bg-[#99E39E]/90">
                 {isSubmitting && <Loader2 className="animate-spin size-4" />}
-                {isSubmitting ? 'Processando...' : 'Criar conta'}
+                {isSubmitting ? 'Processando...' : (mode === 'edit' ? 'Concluir' : 'Criar conta')}
               </Button>
             </div>
           </form>
