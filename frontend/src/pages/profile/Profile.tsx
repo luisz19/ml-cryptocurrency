@@ -2,6 +2,7 @@ import { Button, Card, Input } from "@/components";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
 
@@ -20,11 +21,11 @@ const Profile = () => {
    };
 
    const [isEditing, setIsEditing] = useState(false);
+   const navigate = useNavigate();
 
    const {
      register,
      handleSubmit,
-     reset,
      watch,
      formState: { errors, isSubmitting },
    } = useForm<FormValues>({
@@ -144,7 +145,7 @@ const Profile = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => { reset(defaultValues); setIsEditing(false); }}
+              onClick={() => { navigate('/form-profile-risk/edit') }}
             >
               Refazer formulário
             </Button>
