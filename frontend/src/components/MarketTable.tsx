@@ -35,8 +35,7 @@ export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15
   const rows = useMemo(() => data.map(c => {
     const risk: Risk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
     const raw = c.sparkline_in_7d?.price || [];
-    // Pega mais pontos para dar sensação de variação e normaliza (min-max) para evitar linha "reta"
-    const tail = raw.slice(-60); // últimos ~60 pontos (≈ últimas horas/dias dependendo do feed)
+    const tail = raw.slice(-60); 
     const min = Math.min(...tail);
     const max = Math.max(...tail);
     const range = max - min || 1;
