@@ -51,9 +51,9 @@ const SearchInput: React.FC<SearchInputProps> = ({ handleSearch }) => {
           name="search"
           value={searchText}
           onChange={handleInput}
-          className="w-full rounded bg-[#222630] text-white text-sm pl-9 pr-3 p-1
-            border border-transparent focus:outline-none focus:ring-2 focus:ring-[#5e6066]
-            placeholder:text-gray-400 transition-all duration-200"
+          className="w-full rounded bg-white dark:bg-[#222630] text-gray-800 dark:text-white text-sm pl-9 pr-3 p-1
+            border border-gray-300 dark:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5e6066]
+            placeholder:text-gray-400 dark:placeholder:text-gray-400 transition-all duration-200"
           placeholder="Pesquisar"
           autoComplete="off"
         />
@@ -63,22 +63,22 @@ const SearchInput: React.FC<SearchInputProps> = ({ handleSearch }) => {
           className="absolute left-3 top-1/2 -translate-y-1/2"
           disabled
         >
-          <SearchIcon className="w-4 h-4 text-gray-400" />
+          <SearchIcon className="w-4 h-4 text-gray-400 dark:text-gray-400" />
         </button>
       </form>
 
       {searchText.length > 0 && (
-        <ul className="absolute top-11 right-0 w-96 h-96 rounded overflow-x-hidden py-2 bg-[#37383B] text-white text-sm overflow-y-auto">
+        <ul className="absolute top-11 right-0 w-96 h-96 rounded overflow-x-hidden py-2 bg-white dark:bg-[#37383B] text-gray-800 dark:text-white text-sm overflow-y-auto shadow-lg">
           {searchData.length === 0 ? (
             <li className="flex flex-col items-center justify-center py-10">
-              <div className="w-6 h-6 border-4 border-t-transparent border-white rounded-full animate-spin mb-3"></div>
+              <div className="w-6 h-6 border-4 border-t-transparent border-gray-400 dark:border-white rounded-full animate-spin mb-3"></div>
               <span>Por favor, espere...</span>
             </li>
           ) : (
             searchData.map((coin: Coin) => (
               <li
                 key={coin.id}
-                className="flex items-center m-5 my-2 cursor-pointer"
+                className="flex items-center m-5 my-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded p-1 transition-colors"
                 onClick={() => selectCoin(coin.id)}
               >
                 <img
