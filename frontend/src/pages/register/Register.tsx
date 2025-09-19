@@ -39,7 +39,7 @@ const Register = () => {
       if (import.meta.env.DEV) {
         console.debug("register submit", values);
       }
-      navigate("/");
+      navigate("/form-profile-risk");
     } finally {
       setLoading(false);
     }
