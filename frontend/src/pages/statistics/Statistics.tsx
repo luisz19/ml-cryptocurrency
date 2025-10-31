@@ -1,5 +1,20 @@
-const Statistics = () => {
-  return <div>Statistics</div>;
-}
+import { CryptoProvider } from "@/context/CryptoContext";
+import CryptoTable from "@/components/CryptoTable";
+import Filters from "@/components/Filters";
 
-export default Statistics
+const Statistics = () => {
+  return (
+    <CryptoProvider>
+
+      <div className="w-[80%]  flex flex-col  mb-24 relative mx-auto">
+        <Filters/>
+        <CryptoTable />
+      </div>
+
+  
+    </CryptoProvider>
+    
+  );
+};
+
+export default Statistics;
