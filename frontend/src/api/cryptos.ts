@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://cryptolens-backend.onrender.com';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
 export interface CryptoResponse {
