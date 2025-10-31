@@ -1,3 +1,11 @@
+// Buscar dados do usuário autenticado
+export async function fetchUserProfile(token: string) {
+	const res = await fetch(`${API_URL}/auth/me`, {
+		headers: { 'Authorization': `Bearer ${token}` }
+	});
+	if (!res.ok) throw new Error('Erro ao buscar perfil do usuário.');
+	return await res.json(); // { id, name, email, risk_profile }
+}
 // Integração com backend FastAPI para login, registro e perfil de risco
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -39,5 +47,5 @@ export async function submitQuestionnaire(data: { answers: { question_id: number
 		body: JSON.stringify(data)
 	});
 	if (!res.ok) throw new Error('Erro ao enviar respostas.');
-	return await res.json(); // { risk_level, total_score }
+    return await res.json(); // { risk_level, total_score }
 }
