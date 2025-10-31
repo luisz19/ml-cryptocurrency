@@ -1,14 +1,36 @@
 import { Card, CardContent } from "@/components";
 import CryptoCards from "@/components/CryptoCards";
 import { CryptoChart } from "@/components/CryptoChart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type Cryptocurrency } from '@/api/coingecko';
 import { CryptoSelector } from "@/components/CryptoSelector";
 import { MarketTable } from '@/components/MarketTable';
+import { cryptosApi } from '@/api/cryptos';
 
 
 const Recommendations = () => {
   const [selectedCrypto, setSelectedCrypto] = useState<Cryptocurrency | null>(null);
+  const [recommendations, setRecommendations] = useState<Cryptocurrency[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      try {
+        setLoading(true);
+        const data = await cryptosApi.getRecommendations();
+        setRecommendations(data);
+        if (!selectedCrypto && data.length > 0) {
+          setSelectedCrypto(data[0]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar recomendações:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRecommendations();
+  }, []);
   return (
 
 
@@ -27,13 +49,15 @@ const Recommendations = () => {
       </div>
 
       <Card className="container mx-auto p-10 flex flex-col">
+        {loading ? (
+          <div className="text-center py-8">Carregando recomendações...</div>
+        ) : (
           <MarketTable
-            limit={5}
+            data={recommendations}
             selectedId={selectedCrypto?.id || null}
             onSelect={(coin) => setSelectedCrypto(coin)}
           />
-
-
+        )}
       </Card>
 
 
@@ -44,6 +68,7 @@ const Recommendations = () => {
             <CryptoSelector
               selectedCrypto={selectedCrypto}
               onSelect={setSelectedCrypto}
+              cryptos={recommendations}
             />
           </div>
         </div>
