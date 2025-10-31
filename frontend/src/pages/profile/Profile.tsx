@@ -1,8 +1,9 @@
 import { Button, Card, Input } from "@/components";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { useNavigate } from "react-router-dom";
+import { fetchUserProfile } from "@/api/backend";
 
 const Profile = () => {
 
@@ -13,51 +14,66 @@ const Profile = () => {
     confirmPassword: string;
   };
 
-   const defaultValues: FormValues = {
-     name: "Ester Alves",
-     email: "e.alves@example.com",
-     password: "********",
-     confirmPassword: "********",
-   };
-
    const [isEditing, setIsEditing] = useState(false);
+   const [loading, setLoading] = useState(true);
+   const [profile, setProfile] = useState<{ name: string; email: string; risk_profile?: string } | null>(null);
    const navigate = useNavigate();
 
    const {
      register,
      handleSubmit,
      watch,
+     reset,
      formState: { errors, isSubmitting },
    } = useForm<FormValues>({
-     defaultValues,
+     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
      mode: "onBlur",
    });
 
-   const onSubmit = async (values: FormValues) => {
-     await new Promise((r) => setTimeout(r, 10000));
-     if (import.meta.env.DEV) {
-       console.debug("profile submit", values);
+   useEffect(() => {
+     const token = localStorage.getItem("token");
+     if (!token) {
+       navigate("/");
+       return;
      }
+     fetchUserProfile(token)
+       .then((data) => {
+         setProfile(data);
+         reset({ name: data.name, email: data.email, password: "", confirmPassword: "" });
+         setLoading(false);
+       })
+       .catch(() => {
+         setLoading(false);
+       });
+   }, [navigate, reset]);
+
+   const onSubmit = async (values: FormValues) => {
+     // Aqui você pode implementar a chamada para atualizar o perfil no backend
      setIsEditing(false);
    };
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-full">Carregando perfil...</div>;
+  }
+  if (!profile) {
+    return <div className="flex justify-center items-center h-full text-destructive">Erro ao carregar perfil.</div>;
+  }
   return (
     <section className="p-4 h-full flex flex-col gap-4 justify-center">
       <div className="m-auto w-full max-w-6xl grid md:grid-cols-6 gap-4 justify-center">
       <Card className=" w-full md:col-span-2 flex flex-col h-[500px] items-center justify-center bg-sidebar-accent">
         <div className="w-[100px] h-[100px] rounded-full dark:bg-primary-foreground/50 bg-primary-foreground/60  "></div>
         <div className="flex flex-col items-center ">
-          <h4 className="text-2xl">Ester Alves</h4>
-          <span className="text-sm text-accent-foreground/60">e.alves@example.com</span>
+          <h4 className="text-2xl">{profile.name}</h4>
+          <span className="text-sm text-accent-foreground/60">{profile.email}</span>
 
           <div className="flex flex-col mt-3 items-center gap-1">
             <span className="text-xs text-accent-foreground/80">Perfil de risco:</span>
-            <Badge variant="success">Moderado</Badge>
+            <Badge variant="success">{profile.risk_profile || "Não definido"}</Badge>
           </div>
         </div>
 
         <Button variant="destructive" className="p-5">Deletar Perfil</Button>
-
       </Card>
 
       <Card className="col-span-4 p-6 md:p-8 flex flex-col justify-center gap-4 bg-sidebar-accent">
