@@ -9,14 +9,22 @@ interface MarketTableProps {
   selectedId?: string | null;
   currency?: string;
   limit?: number;
+  data?: Cryptocurrency[];
 }
 
-export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15 }: MarketTableProps) {
+export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15, data: externalData }: MarketTableProps) {
   const [data, setData] = useState<Cryptocurrency[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (externalData) {
+      setData(externalData);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     const load = async () => {
       setLoading(true); setError(null);
       try {
@@ -27,7 +35,7 @@ export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15
       } finally { setLoading(false); }
     };
     load();
-  }, [limit, currency]);
+  }, [limit, currency, externalData]);
 
   const riskLevels = ['Alto', 'Médio', 'Baixo'] as const;
   type Risk = typeof riskLevels[number];

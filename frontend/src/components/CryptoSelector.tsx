@@ -15,37 +15,47 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { fetchTopCryptocurrencies, type Cryptocurrency } from '@/api/coingecko';
+import { type Cryptocurrency } from '@/api/coingecko';
+import { cryptosApi } from '@/api/cryptos';
 
 interface CryptoSelectorProps {
   selectedCrypto: Cryptocurrency | null;
   onSelect: (crypto: Cryptocurrency) => void;
+  cryptos?: Cryptocurrency[];
 }
 
-export function CryptoSelector({ selectedCrypto, onSelect }: CryptoSelectorProps) {
+export function CryptoSelector({ selectedCrypto, onSelect, cryptos: providedCryptos }: CryptoSelectorProps) {
   const [open, setOpen] = useState(false);
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadCryptocurrencies = async () => {
+      if (providedCryptos && providedCryptos.length > 0) {
+        setCryptos(providedCryptos);
+        setLoading(false);
+        if (!selectedCrypto) {
+          onSelect(providedCryptos[0]);
+        }
+        return;
+      }
+
       try {
-        const data = await fetchTopCryptocurrencies(100);
+        const data = await cryptosApi.getRecommendations();
         setCryptos(data);
 
         if (!selectedCrypto && data.length > 0) {
-          const bitcoin = data.find(crypto => crypto.id === 'bitcoin') || data[0];
-          onSelect(bitcoin);
+          onSelect(data[0]);
         }
       } catch (error) {
-        console.error('Failed to load cryptocurrencies:', error);
+        console.error('Falha ao carregar criptomoedas:', error);
       } finally {
         setLoading(false);
       }
     };
 
     loadCryptocurrencies();
-  }, [selectedCrypto, onSelect]);
+  }, [providedCryptos, selectedCrypto, onSelect]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -66,9 +76,9 @@ export function CryptoSelector({ selectedCrypto, onSelect }: CryptoSelectorProps
               <span className="font-medium">{selectedCrypto.name}</span>
             </div>
           ) : loading ? (
-            ''
+            'Carregando'
           ) : (
-            ''
+            'Selecionar crypto'
           )}
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
