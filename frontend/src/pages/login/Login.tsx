@@ -105,11 +105,7 @@ const Login = () => {
                   {errors.password.message}
                 </p>
               )}
-              <div className="text-right">
-                <Link to="#" className="text-sm dark:text-primary hover:underline">
-                  Esqueceu a senha?
-                </Link>
-              </div>
+            
             </div>
             {error && (
               <p role="alert" className="text-sm text-destructive">

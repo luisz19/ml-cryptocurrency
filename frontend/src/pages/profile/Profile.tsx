@@ -3,30 +3,36 @@ import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { useNavigate } from "react-router-dom";
-import { fetchUserProfile } from "@/api/backend";
+import { fetchUserProfile, updateUserProfile, deleteUserAccount } from "@/api/backend";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
 const Profile = () => {
 
    type FormValues = {
     name: string;
     email: string;
-    password: string;
-    confirmPassword: string;
   };
+
+  const profileRiskMap: Record<string, string> = {
+    alto: 'Agressivo',
+    moderado: 'Moderado',
+    baixo: 'Conservador',
+  }
 
    const [isEditing, setIsEditing] = useState(false);
    const [loading, setLoading] = useState(true);
-   const [profile, setProfile] = useState<{ name: string; email: string; risk_profile?: string } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; email: string; risk_profile?: string } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
    const navigate = useNavigate();
 
    const {
      register,
      handleSubmit,
-     watch,
      reset,
      formState: { errors, isSubmitting },
    } = useForm<FormValues>({
-     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+     defaultValues: { name: "", email: "" },
      mode: "onBlur",
    });
 
@@ -39,7 +45,7 @@ const Profile = () => {
      fetchUserProfile(token)
        .then((data) => {
          setProfile(data);
-         reset({ name: data.name, email: data.email, password: "", confirmPassword: "" });
+         reset({ name: data.name, email: data.email });
          setLoading(false);
        })
        .catch(() => {
@@ -47,9 +53,31 @@ const Profile = () => {
        });
    }, [navigate, reset]);
 
-   const onSubmit = async (values: FormValues) => {
-     // Aqui você pode implementar a chamada para atualizar o perfil no backend
-     setIsEditing(false);
+  const onSubmit = async (values: FormValues) => {
+     try {
+       const token = localStorage.getItem("token");
+       if (!token) {
+         navigate("/");
+         return;
+       }
+       if (!profile) return;
+
+       const updates: { name?: string; email?: string } = {};
+       if (values.name && values.name !== profile.name) updates.name = values.name;
+       if (values.email && values.email !== profile.email) updates.email = values.email;
+
+       if (Object.keys(updates).length === 0) {
+         setIsEditing(false);
+         return;
+       }
+
+       const updated = await updateUserProfile(token, updates);
+       setProfile(prev => prev ? { ...prev, name: updated.name ?? prev.name, email: updated.email ?? prev.email } : prev);
+       reset({ name: updated.name, email: updated.email });
+       setIsEditing(false);
+     } catch (e) {
+       console.error('Erro ao atualizar perfil:', e);
+     }
    };
 
   if (loading) {
@@ -69,11 +97,45 @@ const Profile = () => {
 
           <div className="flex flex-col mt-3 items-center gap-1">
             <span className="text-xs text-accent-foreground/80">Perfil de risco:</span>
-            <Badge variant="success">{profile.risk_profile || "Não definido"}</Badge>
+            <Badge variant="success">{(profile.risk_profile && profileRiskMap[profile.risk_profile.toLowerCase()]) || "Não definido"}</Badge>
           </div>
         </div>
 
-        <Button variant="destructive" className="p-5">Deletar Perfil</Button>
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive" className="p-5">Deletar Perfil</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Deseja realmente deletar sua conta?</DialogTitle>
+              <DialogDescription>
+                Essa ação é irreversível. Seus dados e preferências serão removidos permanentemente.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={deleting}>Cancelar</Button>
+              </DialogClose>
+              <Button type="button" variant="destructive" disabled={deleting}
+                onClick={async () => {
+                  try {
+                    setDeleting(true);
+                    const token = localStorage.getItem('token');
+                    if (!token) { navigate('/'); return; }
+                    await deleteUserAccount(token);
+                    localStorage.removeItem('token');
+                    setDeleteOpen(false);
+                    navigate('/');
+                  } catch (e) {
+                    console.error('Erro ao deletar conta:', e);
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+              >{deleting ? 'Deletando...' : 'Deletar'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
 
       <Card className="col-span-4 p-6 md:p-8 flex flex-col justify-center gap-4 bg-sidebar-accent">
@@ -86,7 +148,7 @@ const Profile = () => {
               className="dark:bg-primary-foreground"
               aria-invalid={!!errors.name}
               disabled={!isEditing}
-              readOnly={!isEditing}
+              autoFocus={isEditing}
               {...register("name", { required: isEditing ? "Informe seu nome." : false })}
             />
             {errors.name && (
@@ -103,7 +165,6 @@ const Profile = () => {
               placeholder="Email"
               aria-invalid={!!errors.email}
               disabled={!isEditing}
-              readOnly={!isEditing}
               {...register("email", {
                 required: isEditing ? "Informe seu email." : false,
                 pattern: isEditing
@@ -117,45 +178,7 @@ const Profile = () => {
             )}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">Senha</label>
-            <Input
-              id="password"
-              type="password"
-              className="dark:bg-primary-foreground"
-              placeholder="Senha"
-              aria-invalid={!!errors.password}
-              disabled={!isEditing}
-              readOnly={!isEditing}
-              {...register("password", isEditing ? {
-                required: "Informe a senha.",
-                minLength: { value: 6, message: "Mínimo de 6 caracteres." },
-              } : {})}
-            />
-            {errors.password && (
-              <p role="alert" className="text-xs text-destructive">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium">Confirmar Senha</label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              className="dark:bg-primary-foreground"
-              placeholder="Confirmar Senha"
-              aria-invalid={!!errors.confirmPassword}
-              disabled={!isEditing}
-              readOnly={!isEditing}
-              {...register("confirmPassword", isEditing ? {
-                required: "Confirme a senha.",
-                validate: (v) => v === watch("password") || "As senhas não conferem.",
-              } : {})}
-            />
-            {errors.confirmPassword && (
-              <p role="alert" className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-            )}
-          </div>
+          {/* Campo de senha removido deste fluxo de edição. */}
 
           <div className="grid grid-cols-2 gap-4 pt-2">
             <Button
@@ -166,7 +189,10 @@ const Profile = () => {
               Refazer formulário
             </Button>
             {isEditing ? (
-              <Button type="submit" disabled={isSubmitting}>Salvar</Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => { reset({ name: profile.name, email: profile.email }); setIsEditing(false); }}>Cancelar</Button>
+                <Button type="submit" disabled={isSubmitting}>Salvar</Button>
+              </div>
             ) : (
               <Button type="button" onClick={() => setIsEditing(true)}>Editar</Button>
             )}

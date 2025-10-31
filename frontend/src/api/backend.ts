@@ -29,11 +29,51 @@ export async function register(name: string, email: string, password: string) {
 	return await res.json(); // { access_token }
 }
 
+export async function updateUserProfile(
+	token: string,
+	updates: { name?: string; email?: string }
+) {
+	const body: Record<string, string> = {};
+	if (typeof updates.name === 'string') body.name = updates.name;
+	if (typeof updates.email === 'string') body.email = updates.email;
+
+	const res = await fetch(`${API_URL}/auth/user/me`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${token}`
+		},
+		body: JSON.stringify(body)
+	});
+	if (!res.ok) throw new Error('Erro ao atualizar perfil.');
+	return await res.json(); // { id, name, email, risk_profile }
+}
+
+export async function deleteUserAccount(token: string) {
+	const res = await fetch(`${API_URL}/auth/user/me`, {
+		method: 'DELETE',
+		headers: {
+			'Authorization': `Bearer ${token}`
+		}
+	});
+	if (!res.ok) throw new Error('Erro ao deletar conta.');
+	return; // No content
+}
+
 export async function fetchQuestions(token: string) {
 	const res = await fetch(`${API_URL}/questionnaire/questions`, {
 		headers: { 'Authorization': `Bearer ${token}` }
 	});
 	if (!res.ok) throw new Error('Erro ao buscar perguntas.');
+	return await res.json(); // [{...}]
+}
+
+export async function fetchAnswers(token: string) {
+	const res = await fetch(`${API_URL}/questionnaire/answers/`, {
+		headers: { 'Authorization': `Bearer ${token}` }
+	});
+	console.log('fetchAnswers response:', res);
+	if (!res.ok) throw new Error('Erro ao buscar respostas.');
 	return await res.json(); // [{...}]
 }
 
