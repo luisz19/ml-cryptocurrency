@@ -1,72 +1,16 @@
-import { useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Card, CardContent, Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components';
 import { cn } from '@/lib/utils';
+import { fetchQuestions, submitQuestionnaire } from '@/api/backend';
 
-type FormValues = {
-  horizon: string;
-  dropReaction: string;
-  knowledge: string;
-  goal: string;
-  allocation: string;
-};
-
-const questions: { name: keyof FormValues; label: string; options: { value: string; label: string; score: number }[] }[] = [
-  {
-    name: 'horizon',
-    label: 'Qual o seu horizonte de investimento em criptomoedas?',
-    options: [
-      { value: 'short', label: 'Curto prazo (até 6 meses)', score: 1 },
-      { value: 'medium', label: 'Médio prazo (6 meses a 2 anos)', score: 2 },
-      { value: 'long', label: 'Longo prazo (mais de 2 anos)', score: 3 },
-    ],
-  },
-  {
-    name: 'dropReaction',
-    label: 'Se o valor cair 20% em uma semana, o que você faria?',
-    options: [
-      { value: 'sell', label: 'Vender tudo imediatamente', score: 1 },
-      { value: 'hold', label: 'Manter parte e observar', score: 2 },
-      { value: 'buyMore', label: 'Comprar mais (aproveitar a queda)', score: 3 },
-    ],
-  },
-  {
-    name: 'knowledge',
-    label: 'Qual o seu nível de conhecimento sobre investimentos?',
-    options: [
-      { value: 'beginner', label: 'Nenhum ou iniciante', score: 1 },
-      { value: 'intermediate', label: 'Já invisto em outras classes', score: 2 },
-      { value: 'advanced', label: 'Tenho experiência com cripto/trading', score: 3 },
-    ],
-  },
-  {
-    name: 'goal',
-    label: 'Qual é o seu principal objetivo com criptomoedas?',
-    options: [
-      { value: 'protect', label: 'Proteger capital', score: 1 },
-      { value: 'grow', label: 'Crescer gradualmente', score: 2 },
-      { value: 'maximize', label: 'Máximo retorno possível', score: 3 },
-    ],
-  },
-  {
-    name: 'allocation',
-    label: 'Qual percentual do patrimônio investiria em criptomoedas?',
-    options: [
-      { value: 'upto10', label: 'Até 10%', score: 1 },
-      { value: '10to30', label: 'De 10% a 30%', score: 2 },
-      { value: 'over30', label: 'Mais de 30%', score: 3 },
-    ],
-  },
-];
-
-function classifyRisk(score: number) {
-  const max = questions.length * 3; // 15
-  const pct = score / max;
-  if (pct < 0.4) return { level: 'Conservador', color: 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30' };
-  if (pct < 0.7) return { level: 'Moderado', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' };
-  return { level: 'Agressivo', color: 'bg-[#99E39E]/15 text-[#99E39E] border-[#99E39E]/30' };
+interface Question {
+  name: string;
+  label: string;
+  options: { value: string; label: string }[];
 }
 
 interface FormProfileRiskProps {
@@ -74,30 +18,78 @@ interface FormProfileRiskProps {
 }
 
 const FormProfileRisk = ({ mode }: FormProfileRiskProps) => {
-  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    defaultValues: {
-      horizon: '', dropReaction: '', knowledge: '', goal: '', allocation: ''
-    }
-  });
-  const [result, setResult] = useState<{ level: string; score: number } | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ profile: string; score: number } | null>(null);
   const navigate = useNavigate();
 
-  const onSubmit = async (values: FormValues) => {
-    let score = 0;
-    questions.forEach(p => {
-      const opt = p.options.find(o => o.value === values[p.name]);
-      if (opt) score += opt.score;
-    });
-    const r = classifyRisk(score);
-    setResult({ level: r.level, score });
- 
-    await new Promise(res => setTimeout(res, 4000));
-    if (mode === 'edit') {
-      navigate('/profile');
-    } else {
-      navigate('/dashboard');
+  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Record<string, string>>({});
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/');
+      return;
+    }
+    fetchQuestions(token)
+      .then((qs) => {
+        // Corrige o formato das perguntas para o frontend
+        const mapped = qs.map((q: any) => ({
+          name: q.id ? String(q.id) : q.question_text, // usa id como name
+          label: q.question_text,
+          options: Array.isArray(q.options)
+            ? q.options.map((o: any) => ({ value: o.value, label: o.label }))
+            : []
+        }));
+        setQuestions(mapped);
+        setLoadingQuestions(false);
+      })
+      .catch(() => {
+        setError('Erro ao buscar perguntas.');
+        setLoadingQuestions(false);
+      });
+  }, [navigate]);
+
+  const onSubmit = async (values: Record<string, string>) => {
+    setError(null);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('Usuário não autenticado.');
+      return;
+    }
+    try {
+      // Converte respostas para o formato esperado pelo backend
+      const answers = Object.entries(values).map(([key, value]) => ({
+        question_id: Number(key),
+        selected_value: value
+      }));
+      const res = await submitQuestionnaire({ answers }, token);
+      setResult({ profile: res.risk_level || res.profile, score: res.total_score || res.score });
+      setTimeout(() => {
+        if (mode === 'edit') {
+          navigate('/profile');
+        } else {
+          navigate('/dashboard');
+        }
+      }, 2000);
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao enviar respostas.');
     }
   };
+
+  if (loadingQuestions) {
+    return (
+      <section className="w-full flex justify-center px-4 py-12">
+        <Card className="w-full max-w-2xl flex-col">
+          <CardContent className="flex items-center justify-center min-h-[300px]">
+            <Loader2 className="animate-spin size-8" />
+            <span className="ml-4">Carregando perguntas...</span>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full flex justify-center px-4 py-12">
@@ -108,40 +100,48 @@ const FormProfileRisk = ({ mode }: FormProfileRiskProps) => {
             <p className="text-sm text-muted-foreground mt-2">Investimentos alinhados ao seu perfil de risco</p>
           </div>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {questions.length === 0 && (
+              <p className="text-sm text-destructive">Nenhuma pergunta disponível. Tente novamente mais tarde.</p>
+            )}
             {questions.map((p) => (
               <div key={p.name} className="space-y-2">
                 <label className="text-xs font-medium tracking-wide block">{p.label}</label>
-                <Controller
-                  name={p.name}
-                  control={control}
-                  rules={{ required: 'Selecione uma opção' }}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className={cn('w-full', errors[p.name] && 'aria-invalid border-destructive')}>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {p.options.map(o => (
-                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
+                {(Array.isArray(p.options) && p.options.length > 0) ? (
+                  <Controller
+                    name={p.name}
+                    control={control}
+                    rules={{ required: 'Selecione uma opção' }}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className={cn('w-full', errors[p.name] && 'aria-invalid border-destructive')}>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {p.options.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                ) : (
+                  <p className="text-xs text-destructive mt-1">Opções não disponíveis para esta pergunta.</p>
+                )}
                 {errors[p.name] && <p className="text-xs text-destructive mt-1">{errors[p.name]?.message}</p>}
               </div>
             ))}
 
+            {error && <p className="text-sm text-destructive mt-2">{error}</p>}
+
             {result && (
-              <Card className="border-dashed">
+              <Card className="border-dashed mt-4">
                 <CardContent className="p-4 flex flex-col gap-2">
-                  <span className="text-sm text-muted-foreground">Resultado preliminar</span>
+                  <span className="text-sm text-muted-foreground">Resultado</span>
                   <div className="flex items-center gap-3">
                     <span className="text-sm">Perfil:</span>
-                    {(() => { const cls = classifyRisk(result.score); return (
-                      <span className={cn('text-xs px-3 py-1 rounded-full border font-medium', cls.color)}>{cls.level}</span>
-                    ); })()}
+                    <span className="text-xs px-3 py-1 rounded-full border font-medium bg-[#99E39E]/15 text-[#99E39E] border-[#99E39E]/30">{result.profile}</span>
                   </div>
+                  <span className="text-xs">Score: {result.score}</span>
                 </CardContent>
               </Card>
             )}
@@ -156,7 +156,6 @@ const FormProfileRisk = ({ mode }: FormProfileRiskProps) => {
               </Button>
             </div>
           </form>
-
         </CardContent>
       </Card>
     </section>

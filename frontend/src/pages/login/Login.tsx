@@ -12,6 +12,7 @@ import {
   Button,
   ThemeToggle,
 } from "@/components";
+import { login as loginApi } from "@/api/backend";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,9 +36,10 @@ const Login = () => {
     setError(null);
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 700));
       if (!values.email || !values.password)
         throw new Error("Preencha email e senha.");
+      const res = await loginApi(values.email, values.password);
+      localStorage.setItem("token", res.access_token);
       navigate("/dashboard");
     } catch (err: any) {
       setError(err?.message || "Falha ao entrar.");

@@ -12,8 +12,10 @@ import {
   Button,
   ThemeToggle,
 } from "@/components";
+import { register as registerApi } from "@/api/backend";
 
 type FormValues = {
+  name: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -22,24 +24,30 @@ type FormValues = {
 const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    defaultValues: { email: "", password: "", confirmPassword: "" },
+  defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
     mode: "onBlur",
   });
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
+    setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      if (import.meta.env.DEV) {
-        console.debug("register submit", values);
-      }
+      if (!values.name || !values.email || !values.password)
+        throw new Error("Preencha nome, email e senha.");
+      if (values.password !== values.confirmPassword)
+        throw new Error("As senhas não conferem.");
+  const res = await registerApi(values.name, values.email, values.password);
+      localStorage.setItem("token", res.access_token);
       navigate("/form-profile-risk");
+    } catch (err: any) {
+      setError(err?.message || "Erro ao registrar.");
     } finally {
       setLoading(false);
     }
@@ -59,6 +67,22 @@ const Register = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">Nome</label>
+              <Input
+                id="name"
+                type="text"
+                autoComplete="name"
+                placeholder="Seu nome completo"
+                aria-invalid={!!errors.name}
+                {...register("name", {
+                  required: "Informe seu nome."
+                })}
+              />
+              {errors.name && (
+                <p role="alert" className="text-xs text-destructive">{errors.name.message}</p>
+              )}
+            </div>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">Email</label>
               <Input
