@@ -1,11 +1,11 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { redirect, useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Card, CardContent, Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components';
 import { cn } from '@/lib/utils';
-import { fetchQuestions, submitQuestionnaire } from '@/api/backend';
+import { fetchAnswers, fetchQuestions, submitQuestionnaire } from '@/api/backend';
 
 interface Question {
   name: string;
@@ -49,6 +49,21 @@ const FormProfileRisk = ({ mode }: FormProfileRiskProps) => {
         setError('Erro ao buscar perguntas.');
         setLoadingQuestions(false);
       });
+
+    fetchAnswers(token)
+      .then((as) => {
+        const defaultValues: Record<string, string> = {};
+        as.forEach((a: any) => {
+          defaultValues[String(a.question_id)] = a.selected_value;
+        });
+        reset(defaultValues);
+      })
+    
+      .catch(() => {
+        setError('Erro ao buscar respostas.');
+        setLoadingQuestions(false);
+      });
+
   }, [navigate]);
 
   const onSubmit = async (values: Record<string, string>) => {
@@ -147,7 +162,7 @@ const FormProfileRisk = ({ mode }: FormProfileRiskProps) => {
             )}
 
             <div className="flex items-center gap-4 pt-2">
-              <Button type="button" variant="ghost" className="flex-1" onClick={() => { reset(); setResult(null); }}>
+              <Button type="button" variant="ghost" className="flex-1" onClick={() => { reset(); setResult(null); navigate('/profile'); }}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting} className="flex-1 bg-[#99E39E] text-black hover:bg-[#99E39E]/90">

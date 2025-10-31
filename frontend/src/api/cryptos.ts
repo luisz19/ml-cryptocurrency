@@ -1,5 +1,6 @@
 const API_BASE = 'https://cryptolens-backend.onrender.com';
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+import type { Cryptocurrency } from './coingecko';
 
 export interface CryptoResponse {
   id: number;
@@ -12,7 +13,16 @@ export interface CryptoCreate {
   symbol: string;
 }
 
-async function fetchCoinGeckoDataByNameOrSymbol(name: string, symbol: string): Promise<any> {
+type RecommendationRaw = {
+  id: number;
+  crypto_id?: number;
+  risk_level?: string;
+  user_id?: number;
+  name?: string;
+  symbol?: string;
+};
+
+async function fetchCoinGeckoDataByNameOrSymbol(name: string, symbol: string): Promise<Cryptocurrency | null> {
   try {
     const response = await fetch(
       `${COINGECKO_BASE}/coins/markets?vs_currency=usd&ids=&per_page=250&page=1&sparkline=true&price_change_percentage=24h`
@@ -43,20 +53,40 @@ async function fetchCoinGeckoDataByNameOrSymbol(name: string, symbol: string): P
 }
 
 export const cryptosApi = {
-  getRecommendations: async (): Promise<any[]> => {
-    const recommendations = await fetch(`${API_BASE}/crypto/`).then(res => res.json());
+  getRecommendations: async (): Promise<Cryptocurrency[]> => {
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const recommendations: RecommendationRaw[] = await fetch(`${API_BASE}/recommendations/`, { headers }).then(res => res.json());
     
     const recommendationsWithData = await Promise.all(
-      recommendations.map(async (crypto: CryptoResponse) => {
-        const coingeckoData = await fetchCoinGeckoDataByNameOrSymbol(crypto.name, crypto.symbol);
-        if (!coingeckoData) {
+      recommendations.map(async (item: RecommendationRaw) => {
+        try {
+          let name = item.name;
+          let symbol = item.symbol;
+
+          // Se vier apenas o crypto_id do backend, buscar os dados da crypto primeiro
+          if ((!name || !symbol) && item.crypto_id) {
+            const crypto: CryptoResponse = await fetch(`${API_BASE}/cryptos/${item.crypto_id}`).then(r => r.json());
+            name = crypto?.name;
+            symbol = crypto?.symbol;
+          }
+
+          if (!name || !symbol) return null;
+
+          const coingeckoData = await fetchCoinGeckoDataByNameOrSymbol(name, symbol);
+          return coingeckoData;
+        } catch (e) {
+          console.error('Error building recommendation item:', e);
           return null;
         }
-        return coingeckoData;
       })
     );
     
-    return recommendationsWithData.filter(Boolean);
+    return recommendationsWithData.filter(Boolean) as Cryptocurrency[];
   },
   getAll: (): Promise<CryptoResponse[]> => 
     fetch(`${API_BASE}/cryptos/`).then(res => res.json()),
@@ -71,3 +101,7 @@ export const cryptosApi = {
   getById: (id: number): Promise<CryptoResponse> => 
     fetch(`${API_BASE}/cryptos/${id}`).then(res => res.json())
 };
+
+export function fetchRecomendations() {
+
+}
