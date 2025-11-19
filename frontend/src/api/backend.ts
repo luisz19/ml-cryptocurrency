@@ -7,7 +7,8 @@ export async function fetchUserProfile(token: string) {
 	return await res.json(); // { id, name, email, risk_profile }
 }
 // Integração com backend FastAPI para login, registro e perfil de risco
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = 'http://localhost:8000';
 
 export async function login(email: string, password: string) {
 	const res = await fetch(`${API_URL}/auth/login`, {
