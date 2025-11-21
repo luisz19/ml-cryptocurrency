@@ -16,17 +16,17 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { type Cryptocurrency } from '@/api/coingecko';
-import { cryptosApi } from '@/api/cryptos';
+import { cryptosApi, type EnrichedRecommendation, type CryptoRecommendationsResult } from '@/api/cryptos';
 
 interface CryptoSelectorProps {
-  selectedCrypto: Cryptocurrency | null;
-  onSelect: (crypto: Cryptocurrency) => void;
-  cryptos?: Cryptocurrency[];
+  selectedCrypto: (Cryptocurrency | EnrichedRecommendation) | null;
+  onSelect: (crypto: Cryptocurrency | EnrichedRecommendation) => void;
+  cryptos?: (Cryptocurrency | EnrichedRecommendation)[];
 }
 
 export function CryptoSelector({ selectedCrypto, onSelect, cryptos: providedCryptos }: CryptoSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
+  const [cryptos, setCryptos] = useState<(Cryptocurrency | EnrichedRecommendation)[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,10 +42,11 @@ export function CryptoSelector({ selectedCrypto, onSelect, cryptos: providedCryp
 
       try {
         const data = await cryptosApi.getRecommendations();
-        setCryptos(data);
+        const list = Array.isArray(data) ? data : (data as CryptoRecommendationsResult).recommendations;
+        setCryptos(list);
 
-        if (!selectedCrypto && data.length > 0) {
-          onSelect(data[0]);
+        if (!selectedCrypto && list.length > 0) {
+          onSelect(list[0]);
         }
       } catch (error) {
         console.error('Falha ao carregar criptomoedas:', error);
