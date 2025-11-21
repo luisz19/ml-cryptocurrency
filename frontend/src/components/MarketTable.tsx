@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Check, X } from 'lucide-react';
 import { fetchTopCryptocurrenciesWithSparkline, type Cryptocurrency } from '@/api/coingecko';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
@@ -38,10 +39,14 @@ export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15
   }, [limit, currency, externalData]);
 
   const riskLevels = ['Alto', 'Médio', 'Baixo'] as const;
-  type Risk = typeof riskLevels[number];
+  type Risk = typeof riskLevels[number] | '—';
 
   const rows = useMemo(() => data.map(c => {
-    const risk: Risk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
+    const riskRaw = String(((c as any).risk_level ?? (c as any).Risk_Level ?? '')).toLowerCase();
+    let risk: Risk = '—';
+    if (riskRaw === 'alto' || riskRaw === 'high') risk = 'Alto';
+    else if (riskRaw.startsWith('mod') || riskRaw === 'moderate' || riskRaw === 'medium') risk = 'Médio';
+    else if (riskRaw === 'baixo' || riskRaw === 'low') risk = 'Baixo';
     const raw = c.sparkline_in_7d?.price || [];
     const tail = raw.slice(-60); 
     const min = Math.min(...tail);
@@ -51,6 +56,7 @@ export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15
     return ({
       ...c,
       risk,
+      eligible_for_profile: (c as any).eligible_for_profile,
       changePositive: c.price_change_percentage_24h >= 0,
       spark: normalized,
     });
@@ -69,6 +75,7 @@ export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15
             <TableHead className="w-1/6 px-4 text-right">Preço</TableHead>
             <TableHead className="w-1/6 px-4 text-right">24h %</TableHead>
             <TableHead className="w-1/6 px-4 text-right">Risco</TableHead>
+            <TableHead className="w-1/6 px-4 text-right">Elegível</TableHead>
             <TableHead className="w-1/6 px-4 text-right">Sparkline</TableHead>
           </TableRow>
         </TableHeader>
@@ -91,6 +98,15 @@ export function MarketTable({ onSelect, selectedId, currency = 'usd', limit = 15
                   c.risk === 'Médio' && 'text-yellow-500 border-yellow-500/40 bg-yellow-500/10',
                   c.risk === 'Baixo' && 'text-[#99E39E] border-[#99E39E]/40 bg-[#99E39E]/10'
                 )}>{c.risk}</span>
+              </TableCell>
+              <TableCell className="text-right px-3">
+                {c.eligible_for_profile === undefined ? (
+                  <span className="text-[10px] md:text-xs text-muted-foreground">—</span>
+                ) : c.eligible_for_profile ? (
+                  <Check className="h-4 w-4 text-[#99E39E] mx-auto" />
+                ) : (
+                  <X className="h-4 w-4 text-red-500 mx-auto" />
+                )}
               </TableCell>
               <TableCell className="px-2 md:px-3">
                 <div className="h-8 w-full">
