@@ -14,6 +14,12 @@ const Recommendations = () => {
   const [userProfile, setUserProfile] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
+  const profileRiskMap: Record<string, string> = {
+    alto: 'Agressivo',
+    moderado: 'Moderado',
+    baixo: 'Conservador',
+  }
+
   useEffect(() => {
     const loadRecommendations = async () => {
       try {
@@ -40,7 +46,7 @@ const Recommendations = () => {
 
       <Card className="flex flex-col">
         <CardContent className="flex flex-col p-8 gap-2">
-          <h2 className="text-3xl font-semibold pb-1">Recomendações para seu perfil: <span className="text-primary capitalize">{userProfile || '—'}</span></h2>
+          <h2 className="text-3xl font-semibold pb-1">Recomendações para seu perfil: <span className="text-primary capitalize">{profileRiskMap[userProfile] || '—'}</span></h2>
           <p className="text-muted-foreground text-sm max-w-3xl">Lista gerada com base no seu perfil de risco e métricas preditivas. A coluna Elegível indica se o ativo está alinhado ao seu perfil atual.</p>
         </CardContent>
       </Card>
